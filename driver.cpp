@@ -1,7 +1,12 @@
 #include "driver.h"
 #include "server_shared.h"
+#include <string>
+#include <iostream>
+#include <vector>
+#include <codecvt>
 
 #pragma comment(lib, "Ws2_32")
+using namespace std;
 
 static bool send_packet(
 	const SOCKET	connection,
@@ -18,7 +23,6 @@ static bool send_packet(
 		completion_packet.header.magic != packet_magic ||
 		completion_packet.header.type != PacketType::packet_completed)
 		return false;
-
 	out_result = completion_packet.data.completed.result;
 	return true;
 }
@@ -46,8 +50,9 @@ static uint32_t copy_memory(
 
 	uint64_t result = 0;
 	if (send_packet(connection, packet, result))
+	{
 		return uint32_t(result);
-
+	}
 	return 0;
 }
 
@@ -55,6 +60,14 @@ void driver::deinitialize()
 {
 	WSACleanup();
 }
+
+
+void driver::initialize()
+{
+	WSADATA wsa_data;
+	WSAStartup(MAKEWORD(2, 2), &wsa_data);
+}
+
 
 SOCKET driver::connect()
 {
@@ -66,8 +79,13 @@ SOCKET driver::connect()
 
 	const auto connection = socket(AF_INET, SOCK_STREAM, 0);
 	if (connection == INVALID_SOCKET)
+	{
+		cout << "socket 建立失败 \n";
 		return INVALID_SOCKET;
+	}
+		
 
+	
 	if (connect(connection, (SOCKADDR*)&address, sizeof(address)) == SOCKET_ERROR)
 	{
 		closesocket(connection);
@@ -88,8 +106,50 @@ uint32_t driver::read_memory(
 	const SOCKET	connection,
 	const uint32_t	process_id,
 	const uintptr_t address,
-	const uintptr_t buffer,
+	const PVOID buffer,
 	const size_t	size)
 {
-	return copy_memory(connection, process_id, address, GetCurrentProcessId(), buffer, size);
+	return copy_memory(connection, process_id, address, GetCurrentProcessId(), uintptr_t(buffer), size);
+}
+
+
+// 读取基址
+uint64_t driver::get_process_base_address(const SOCKET connection, const uint32_t process_id)
+{
+	Packet packet{ };
+
+	packet.header.magic = packet_magic;
+	packet.header.type = PacketType::packet_get_base_address;
+
+	auto& data = packet.data.get_base_address;
+	data.process_id = process_id;
+
+	uint64_t result = 0;
+	if (send_packet(connection, packet, result))
+		return result;
+
+	return 0;
+}
+
+// 读取 Chain
+uint64_t driver::readChain(const SOCKET connection, const uint32_t process_id, uint64_t base, const vector<uint64_t>& offsets) 
+{
+	uint64_t result = driver::read<uint64_t>(connection, process_id, base + offsets.at(0));
+	for (int i = 1; i < offsets.size(); i++) {
+		result = driver::read<uint64_t>(connection, process_id, result + offsets.at(i));
+	}
+	return result;
+}
+
+// 读取字符串
+string driver::GetUnicodeString(const SOCKET connection, const uint32_t process_id, uint64_t addr, int stringLength)
+{
+	char16_t wcharTemp[64] = { '\0' };
+
+	driver::read_memory(connection, process_id, addr, wcharTemp, stringLength * 2);
+
+	cout << "~~:  \n" << wcharTemp << "\n";
+
+	std::string u8_conv = wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.to_bytes(wcharTemp);
+	return u8_conv;
 }

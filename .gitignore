@@ -3,3 +3,5 @@ x64/
 ARM/
 .editorconfig
 Debug/
+Release/
+Release/driver.obj

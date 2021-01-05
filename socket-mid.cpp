@@ -7,6 +7,7 @@
 #include <string>
 
 using namespace std;
+#pragma comment(lib, "Ws2_32")
 
 string wstring2string(wstring wstr)
 {
@@ -52,10 +53,68 @@ std::uint32_t find_process_by_id(const std::string& name)
 		: 0;
 }
 
+
+//std::string getUnicodeString(uint64_t addr, int stringLength)
+//{
+//	char16_t wcharTemp[64] = { '\0' };
+//	driver::read(addr, wcharTemp, stringLength * 2);
+//	std::string u8_conv = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.to_bytes(wcharTemp);
+//	return u8_conv;
+//}
+//
+
 int main()
 {
+	
+	//while (true) {
+	//	int target;
+	//	cin >> hex >> target;
 
-    std::cout << "Hello World!\n" << find_process_by_id("readm.exe");
+	//	//const auto sth = driver::read<uint32_t>(connection, pid, target);
+	//	cout << "看看获取到了个啥:  \n" << hex << target << "\n";
+
+	//}
+
+    
+	
+	uint32_t pid = find_process_by_id("readm.exe");
+
+	cout << "成功寻找到目标进程！ PID: " << pid << "\n";
+
+	driver::initialize();
+
+	const auto connection = driver::connect();
+	if (connection == INVALID_SOCKET)
+	{
+		cout << "Connection failed.\n";
+		return 0;
+	}
+
+	//while(true) {
+	//	int commond;
+	//	cin >> hex >> commond;
+
+	//	const auto sth = driver::read<uint32_t>(connection, pid, commond);
+	//	cout << "看看获取到了个啥:  \n" << sth << "\n";
+	//}
+
+
+	const auto sth = driver::read<uint32_t>(connection, pid, 0x8FF95C);
+	cout << "看看获取到了个啥:  \n" << sth << "\n";
+
+	//const auto sth1 = driver::GetUnicodeString(connection, pid, 0x8FF8B0, 8);
+	//cout << "看看获取到了个啥:  \n" << sth1 << "\n";
+
+	//
+	//const auto jz = driver::get_process_base_address(connection, pid);
+	//cout << "获取基址:  \n" << hex << jz << "\n";
+
+	driver::disconnect(connection);
+	driver::deinitialize();
+
+	cin.get();
+	/*
+	*/
 }
 
 // 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
