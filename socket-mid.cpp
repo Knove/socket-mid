@@ -5,6 +5,7 @@
 #include <iostream>
 #include <TlHelp32.h>
 #include <string>
+#include "eftstructs.h"
 
 using namespace std;
 #pragma comment(lib, "Ws2_32")
@@ -82,13 +83,7 @@ int main()
 	cout << "成功寻找到目标进程！ PID: " << pid << "\n";
 
 	driver::initialize();
-
-	const auto connection = driver::connect();
-	if (connection == INVALID_SOCKET)
-	{
-		cout << "Connection failed.\n";
-		return 0;
-	}
+	driver::cache(pid);
 
 	//while(true) {
 	//	int commond;
@@ -99,7 +94,7 @@ int main()
 	//}
 
 
-	const auto sth = driver::read<uint32_t>(connection, pid, 0x8FF95C);
+	const auto sth = driver::read<uint32_t>(0x81FDBC);
 	cout << "看看获取到了个啥:  \n" << sth << "\n";
 
 	//const auto sth1 = driver::GetUnicodeString(connection, pid, 0x8FF8B0, 8);
@@ -109,7 +104,6 @@ int main()
 	//const auto jz = driver::get_process_base_address(connection, pid);
 	//cout << "获取基址:  \n" << hex << jz << "\n";
 
-	driver::disconnect(connection);
 	driver::deinitialize();
 
 	cin.get();

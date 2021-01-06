@@ -142,11 +142,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="driver.cpp" />
+    <ClCompile Include="eftstructs.cpp" />
+    <ClCompile Include="math.cpp" />
     <ClCompile Include="socket-mid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h" />
+    <ClInclude Include="eftstructs.h" />
+    <ClInclude Include="math.hpp" />
     <ClInclude Include="server_shared.h" />
+    <ClInclude Include="xorstr.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

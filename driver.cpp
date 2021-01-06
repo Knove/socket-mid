@@ -8,6 +8,9 @@
 #pragma comment(lib, "Ws2_32")
 using namespace std;
 
+uint64_t cached_process_base_address = 0, cached_dwPID = 0, cached_peb = 0;
+SOCKET cached_connection;
+
 static bool send_packet(
 	const SOCKET	connection,
 	const Packet& packet,
@@ -56,8 +59,23 @@ static uint32_t copy_memory(
 	return 0;
 }
 
+
+uint32_t driver::cache(uint32_t pid)
+{
+	cached_connection = driver::connect();
+	if (cached_connection == INVALID_SOCKET)
+	{
+		cout << "Connection failed.\n";
+		return 0;
+	}
+	cached_dwPID = pid;
+	cached_peb = driver::get_process_base_address();
+}
+
+
 void driver::deinitialize()
 {
+	driver::disconnect(cached_connection);
 	WSACleanup();
 }
 
@@ -103,13 +121,11 @@ void driver::disconnect(const SOCKET connection)
 
 
 uint32_t driver::read_memory(
-	const SOCKET	connection,
-	const uint32_t	process_id,
 	const uintptr_t address,
 	const PVOID buffer,
 	const size_t	size)
 {
-	return copy_memory(connection, process_id, address, GetCurrentProcessId(), uintptr_t(buffer), size);
+	return copy_memory(cached_connection, cached_dwPID, address, GetCurrentProcessId(), uintptr_t(buffer), size);
 }
 
 
@@ -131,12 +147,48 @@ uint64_t driver::get_process_base_address(const SOCKET connection, const uint32_
 	return 0;
 }
 
+// 读取基址
+uint64_t driver::get_process_base_address()
+{
+	Packet packet{ };
+
+	packet.header.magic = packet_magic;
+	packet.header.type = PacketType::packet_get_base_address;
+
+	auto& data = packet.data.get_base_address;
+	data.process_id = cached_dwPID;
+
+	uint64_t result = 0;
+	if (send_packet(cached_connection, packet, result))
+		return result;
+
+	return 0;
+}
+
+// 读取 Peb
+uint64_t driver::get_process_peb()
+{
+	Packet packet{ };
+
+	packet.header.magic = packet_magic;
+	packet.header.type = PacketType::packet_get_peb;
+
+	auto& data = packet.data.get_base_peb;
+	data.process_id = cached_dwPID;
+
+	uint64_t result = 0;
+	if (send_packet(cached_connection, packet, result))
+		return result;
+
+	return 0;
+}
+
 // 读取 Chain
 uint64_t driver::readChain(const SOCKET connection, const uint32_t process_id, uint64_t base, const vector<uint64_t>& offsets) 
 {
-	uint64_t result = driver::read<uint64_t>(connection, process_id, base + offsets.at(0));
+	uint64_t result = driver::read<uint64_t>(base + offsets.at(0));
 	for (int i = 1; i < offsets.size(); i++) {
-		result = driver::read<uint64_t>(connection, process_id, result + offsets.at(i));
+		result = driver::read<uint64_t>( result + offsets.at(i));
 	}
 	return result;
 }
@@ -146,7 +198,7 @@ string driver::GetUnicodeString(const SOCKET connection, const uint32_t process_
 {
 	char16_t wcharTemp[64] = { '\0' };
 
-	driver::read_memory(connection, process_id, addr, wcharTemp, stringLength * 2);
+	driver::read_memory(addr, wcharTemp, stringLength * 2);
 
 	cout << "~~:  \n" << wcharTemp << "\n";
 

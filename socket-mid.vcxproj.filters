@@ -21,12 +21,27 @@
     <ClCompile Include="driver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="eftstructs.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="math.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="server_shared.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="eftstructs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="math.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="xorstr.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -9,9 +9,7 @@ enum class PacketType
 {
 	packet_copy_memory,
 	packet_get_base_address,
-	packet_clean_piddbcachetable,
-	packet_clean_mmunloadeddrivers,
-	packet_spoof_drives,
+	packet_get_peb,
 	packet_completed
 };
 
@@ -36,13 +34,9 @@ struct PacketGetProcessId
 	char* process_name;
 };
 
-struct PacketCleanPiDDBCacheTable {
-};
-
-struct PacketCleanMMUnloadedDrivers {
-};
-
-struct PacketSpoofDrives {
+struct PacketGetBasePeb
+{
+	uint32_t process_id;
 };
 
 struct PackedCompleted
@@ -63,9 +57,7 @@ struct Packet
 	{
 		PacketCopyMemory	 copy_memory;
 		PacketGetBaseAddress get_base_address;
-		PacketCleanPiDDBCacheTable clean_piddbcachetable;
-		PacketCleanMMUnloadedDrivers clean_mmunloadeddrivers;
-		PacketSpoofDrives	 spoof_drives;
+		PacketGetBasePeb	 get_base_peb;
 		PackedCompleted		 completed;
 	} data;
 };
