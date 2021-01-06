@@ -64,6 +64,9 @@ std::uint32_t find_process_by_id(const std::string& name)
 //}
 //
 
+
+auto gameData = EFTData::Instance();
+
 int main()
 {
 	
@@ -78,13 +81,34 @@ int main()
 
     
 	
-	uint32_t pid = find_process_by_id("readm.exe");
+	uint32_t pid = find_process_by_id("EscapeFromTarkov.exe");
 
 	cout << "成功寻找到目标进程！ PID: " << pid << "\n";
+
+	if (!pid) return 0;
 
 	driver::initialize();
 	driver::cache(pid);
 
+	// 开始读取
+	bool initStatus = gameData->InitOffsets();
+	cout << " init 运行状态：" << initStatus << "\n";
+
+	if (!initStatus)
+	{
+		driver::deinitialize();
+		return 0;
+	}
+
+	while (TRUE)
+	{
+		gameData->Read();
+		cout << " Read 运行状态：" << initStatus << "\n";
+		Sleep(3000);
+
+	}
+
+	
 	//while(true) {
 	//	int commond;
 	//	cin >> hex >> commond;
@@ -94,8 +118,8 @@ int main()
 	//}
 
 
-	const auto sth = driver::read<uint32_t>(0x81FDBC);
-	cout << "看看获取到了个啥:  \n" << sth << "\n";
+	//const auto sth = driver::read<uint32_t>(0x42F918);
+	//cout << "看看获取到了个啥:  \n" << sth << "\n";
 
 	//const auto sth1 = driver::GetUnicodeString(connection, pid, 0x8FF8B0, 8);
 	//cout << "看看获取到了个啥:  \n" << sth1 << "\n";

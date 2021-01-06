@@ -6,7 +6,8 @@
 
 struct EFTOffsets
 {
-	static constexpr uint64_t offs_gameObjectManager = 0x15181E8;
+	// 0x15181E8
+	static constexpr uint64_t offs_gameObjectManager = 0x156B698;
 
 	uint64_t gameObjectManager = 0x0;
 	uint64_t gameWorld = 0x0;
@@ -17,7 +18,7 @@ struct EFTOffsets
 	struct
 	{
 		static constexpr uint64_t itemList = 0x48; //UPDATED 1/11/2020
-		static constexpr uint64_t registeredPlayers = 0x68; //UPDATED 1/11/2020
+		static constexpr uint64_t registeredPlayers = 0x0080; //UPDATED 1/7/2021
 		static constexpr uint64_t m_LocalPlayerID = 0x30;
 	} localGameWorld_offsets;
 
@@ -50,7 +51,7 @@ struct EFTOffsets
 		static constexpr uint64_t m_pPlayerProfile = 0x03A0;
 		static constexpr uint64_t movementContext = 0x38;
 		static constexpr uint64_t proceduralWeaponAnimation = 0x70; //updayed 1/11/2020
-		static constexpr uint64_t playerBody = 0x88; //updated 1/11/2020
+		static constexpr uint64_t playerBody = 0x00A8; //updated 1/7/2021
 		static constexpr uint64_t m_pHealthController = 0x3D0; //updated 1/11/2020
 		static constexpr uint64_t profile = 0x3A0; //updayed 1/11/2020
 

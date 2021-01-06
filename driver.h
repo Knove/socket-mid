@@ -21,6 +21,7 @@ namespace driver
 	uint64_t get_process_peb();
 
 	uint64_t readChain(SOCKET connection, const uint32_t process_id, uint64_t base, const vector<uint64_t>& offsets);
+	uint64_t readEFTChain(uint64_t base, const std::vector<uint64_t>& offsets);
 	string GetUnicodeString(const SOCKET connection, const uint32_t process_id, uint64_t addr, int stringLength);
 
 	template <typename T>

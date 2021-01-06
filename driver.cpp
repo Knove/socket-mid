@@ -193,6 +193,15 @@ uint64_t driver::readChain(const SOCKET connection, const uint32_t process_id, u
 	return result;
 }
 
+// EFT ¶ÁÈ¡ Chain
+uint64_t driver::readEFTChain(uint64_t base, const std::vector<uint64_t>& offsets) {
+	uint64_t result = driver::read<uint64_t>(base + offsets.at(0));
+	for (int i = 1; i < offsets.size(); i++) {
+		result = driver::read<uint64_t>(result + offsets.at(i));
+	}
+	return result;
+}
+
 // ¶ÁÈ¡×Ö·û´®
 string driver::GetUnicodeString(const SOCKET connection, const uint32_t process_id, uint64_t addr, int stringLength)
 {
