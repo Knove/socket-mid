@@ -81,6 +81,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>G:\C\vcpkg\installed\x64-windows\include;$(IncludePath)</IncludePath>
+    <LibraryPath>G:\C\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -132,6 +134,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="driver.h" />
     <ClInclude Include="eftstructs.h" />
+    <ClInclude Include="HTTPRequest.hpp" />
     <ClInclude Include="math.hpp" />
     <ClInclude Include="server_shared.h" />
     <ClInclude Include="xorstr.hpp" />

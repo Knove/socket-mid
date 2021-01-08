@@ -7,6 +7,7 @@
 #include <codecvt>
 #include <iostream>
 #include "driver.h"
+#include "HTTPRequest.hpp"
 
 using namespace std;
 std::list<uint64_t> bodypart = { BodyParts::Head, BodyParts::Thorax, BodyParts::Stomach, BodyParts::LeftArm, BodyParts::RightArm, BodyParts::LeftLeg, BodyParts::RightLeg };
@@ -16,6 +17,7 @@ EFTData* EFTData::Instance()
 	static EFTData instance;
 	return &instance;
 }
+
 
 /* All one time initialization in here*/
 bool EFTData::InitOffsets()
@@ -57,10 +59,12 @@ bool EFTData::InitOffsets()
 	return true;
 }
 
+string sendStr = "[";
+char char_x[100], char_y[100], char_z[100];
 bool EFTData::Read()
 {
 	this->players.clear();
-
+	sendStr = "[";
 
 	// Accumulate players.
 	{
@@ -69,7 +73,7 @@ bool EFTData::Read()
 
 		if (!onlineusers)
 		{
-			cout << "onlineusers read faild! " << hex << onlineusers << "\n";
+			cout << "onlineusers read faild! \n";
 			return false;
 		}
 			
@@ -81,6 +85,8 @@ bool EFTData::Read()
 		if (player_count <= 0 || !list_base)
 			return false;
 
+		//string palyinfo = "{\"player_count\":\"" + to_string(player_count) + "\"},";
+		//sendStr += palyinfo;
 		constexpr auto BUFFER_SIZE = 128;
 
 		uint64_t player_buffer[BUFFER_SIZE];
@@ -101,7 +107,25 @@ bool EFTData::Read()
 
 				uint64_t bone = driver::readEFTChain(bone_matrix, { 0x20, 0x10, 0x38 });
 				player.location = driver::read<FVector>(bone + 0xB0);
-				cout << "get players!  x:" << player.location.x << "y: "<< player.location.y << "z: " << player.location.z << "\n";
+
+				
+				sprintf_s(char_x, "%f", player.location.x);
+				sprintf_s(char_y, "%f", player.location.y);
+				sprintf_s(char_z, "%f", player.location.z);
+				string x = char_x;
+				string y = char_y;
+				string z = char_z;
+				string str = "{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"z\":\"" + z + "\"}";
+				sendStr += str;
+				if (i != player_count - 1)
+					sendStr += ",";
+				else
+					sendStr += "]";
+
+				memset(char_x, 0, 100);
+				memset(char_y, 0, 100);
+				memset(char_z, 0, 100);
+				//cout << "get players!  x:" << player.location.x << "y: "<< player.location.y << "z: " << player.location.z << "\n";
 				//player.headPos = GetPosition(driver::read<uint64_t>(bone_matrix + (0x20 + ((int)Bones::HumanHead * 8))));
 
 			}
@@ -115,6 +139,23 @@ bool EFTData::Read()
 
 			this->players.emplace_back(player);
 		}
+
+		// ·¢ÆðÇëÇó
+		try
+		{
+			string sendUrl = "http://localhost:7001/savePos?requestInfo=" + sendStr;
+			cout << sendUrl << "\n";
+			http::Request request("http://localhost:7001/savePos");
+			std::map<std::string, std::string> parameters = { {"requestInfo", sendStr}, {"player_count",  to_string(player_count)} };
+			const http::Response response = request.send("POST", parameters, {
+				"Content-Type: application/x-www-form-urlencoded"
+			});
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "Request failed, error: " << e.what() << '\n';
+		}
+
 	}
 	/*
 	*/

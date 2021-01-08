@@ -70,6 +70,7 @@ uint32_t driver::cache(uint32_t pid)
 	}
 	cached_dwPID = pid;
 	cached_peb = driver::get_process_base_address();
+	cout << "cached_peb:  \n" << cached_peb << "\n";
 }
 
 
@@ -125,6 +126,9 @@ uint32_t driver::read_memory(
 	const PVOID buffer,
 	const size_t	size)
 {
+	if (address == 0)
+		return false;
+
 	return copy_memory(cached_connection, cached_dwPID, address, GetCurrentProcessId(), uintptr_t(buffer), size);
 }
 

@@ -1,5 +1,6 @@
 ﻿// socket-mid.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
+#pragma warning(disable:4996)
 
 #include "driver.h"
 #include <iostream>
@@ -69,6 +70,7 @@ auto gameData = EFTData::Instance();
 
 int main()
 {
+
 	
 	//while (true) {
 	//	int target;
@@ -80,8 +82,11 @@ int main()
 	//}
 
     
+
+
 	
 	uint32_t pid = find_process_by_id("EscapeFromTarkov.exe");
+	//uint32_t pid = find_process_by_id("readm.exe");
 
 	cout << "成功寻找到目标进程！ PID: " << pid << "\n";
 
@@ -89,7 +94,7 @@ int main()
 
 	driver::initialize();
 	driver::cache(pid);
-
+	
 	// 开始读取
 	bool initStatus = gameData->InitOffsets();
 	cout << " init 运行状态：" << initStatus << "\n";
@@ -104,8 +109,7 @@ int main()
 	{
 		gameData->Read();
 		cout << " Read 运行状态：" << initStatus << "\n";
-		Sleep(3000);
-
+		Sleep(5000);
 	}
 
 	
@@ -129,8 +133,6 @@ int main()
 	//cout << "获取基址:  \n" << hex << jz << "\n";
 
 	driver::deinitialize();
-
-	cin.get();
 	/*
 	*/
 }

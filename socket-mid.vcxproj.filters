@@ -44,5 +44,8 @@
     <ClInclude Include="xorstr.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="HTTPRequest.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
