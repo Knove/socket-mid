@@ -60,6 +60,7 @@ bool EFTData::InitOffsets()
 }
 
 string sendStr = "[";
+string localPlayerPos = "";
 char char_x[100], char_y[100], char_z[100];
 bool EFTData::Read()
 {
@@ -133,6 +134,14 @@ bool EFTData::Read()
 			// Leave this at the end to have all the data.
 			if (driver::read<int>(player.instance + 0x18))
 			{
+				sprintf_s(char_x, "%f", player.location.x);
+				sprintf_s(char_y, "%f", player.location.y);
+				sprintf_s(char_z, "%f", player.location.z);
+				string x = char_x;
+				string y = char_y;
+				string z = char_z;
+				localPlayerPos = "{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"z\":\"" + z + "\"}";
+
 				this->localPlayer = player;
 				this->localPlayer.location = player.location;
 			}
@@ -146,7 +155,7 @@ bool EFTData::Read()
 			string sendUrl = "http://localhost:7001/savePos?requestInfo=" + sendStr;
 			cout << sendUrl << "\n";
 			http::Request request("http://localhost:7001/savePos");
-			std::map<std::string, std::string> parameters = { {"requestInfo", sendStr}, {"player_count",  to_string(player_count)} };
+			std::map<std::string, std::string> parameters = { {"requestInfo", sendStr}, {"player_count",  to_string(player_count)}, {"localPlayerPos", localPlayerPos } };
 			const http::Response response = request.send("POST", parameters, {
 				"Content-Type: application/x-www-form-urlencoded"
 			});
