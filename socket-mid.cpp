@@ -93,23 +93,18 @@ int main()
 	if (!pid) return 0;
 
 	driver::initialize();
-	driver::cache(pid);
-	
-	// 开始读取
-	bool initStatus = gameData->InitOffsets();
-	cout << " init 运行状态：" << initStatus << "\n";
+	if (!driver::cache(pid)) return 0;
 
-	if (!initStatus)
-	{
-		driver::deinitialize();
-		return 0;
-	}
 
 	while (TRUE)
 	{
-		gameData->Read();
-		cout << " Read 运行状态：" << initStatus << "\n";
-		Sleep(5000);
+		if (!gameData->Read())
+		{
+			gameData->InitOffsets();
+			Sleep(5000);
+		}
+
+		Sleep(5);
 	}
 
 	

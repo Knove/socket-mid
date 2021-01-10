@@ -3,6 +3,9 @@
 #include "math.hpp"
 #include <vector>
 #include <list>
+#include <iostream>
+
+using namespace std;
 
 struct EFTOffsets
 {
@@ -48,12 +51,12 @@ struct EFTOffsets
 
 	struct
 	{
-		static constexpr uint64_t m_pPlayerProfile = 0x03A0;
+		static constexpr uint64_t m_pPlayerProfile = 0x0440;  //updated 1/9/2021
 		static constexpr uint64_t movementContext = 0x38;
 		static constexpr uint64_t proceduralWeaponAnimation = 0x70; //updayed 1/11/2020
 		static constexpr uint64_t playerBody = 0x00A8; //updated 1/7/2021
 		static constexpr uint64_t m_pHealthController = 0x3D0; //updated 1/11/2020
-		static constexpr uint64_t profile = 0x3A0; //updayed 1/11/2020
+		static constexpr uint64_t profile = 0x0440; //updated 1/9/2021
 
 	} Player;
 };
@@ -107,7 +110,6 @@ struct EFTExtract
 	FVector		 location;
 };
 
-
 enum BodyParts : uint64_t
 {
 	Head = 0x20,
@@ -143,11 +145,10 @@ public:
 
 	uint64_t get_mpcamera(uint64_t instance);
 	bool open_extract(uint64_t extract);
-
+	string getPlayerName(uint64_t instance);
 
 	EFTOffsets offsets;
 
-	bool IsPlayer(uint64_t instance);
 private:
 	uint64_t matrix_list_base = 0;
 	uint64_t dependency_index_table_base = 0;

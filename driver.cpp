@@ -70,7 +70,9 @@ uint32_t driver::cache(uint32_t pid)
 	}
 	cached_dwPID = pid;
 	cached_peb = driver::get_process_base_address();
+	if (!cached_peb) return 0;
 	cout << "cached_peb:  \n" << cached_peb << "\n";
+	return 1;
 }
 
 
@@ -207,14 +209,13 @@ uint64_t driver::readEFTChain(uint64_t base, const std::vector<uint64_t>& offset
 }
 
 // ¶ÁÈ¡×Ö·û´®
-string driver::GetUnicodeString(const SOCKET connection, const uint32_t process_id, uint64_t addr, int stringLength)
+string driver::GetUnicodeString(uint64_t addr, int stringLength)
 {
 	char16_t wcharTemp[64] = { '\0' };
 
 	driver::read_memory(addr, wcharTemp, stringLength * 2);
 
-	cout << "~~:  \n" << wcharTemp << "\n";
-
 	std::string u8_conv = wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.to_bytes(wcharTemp);
+	cout << "u8_conv" << u8_conv <<  "\n";
 	return u8_conv;
 }

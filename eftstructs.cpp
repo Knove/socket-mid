@@ -24,8 +24,8 @@ bool EFTData::InitOffsets()
 {
 	this->offsets.gameObjectManager = driver::read<uint64_t>(driver::get_process_peb() + this->offsets.offs_gameObjectManager);
 
-	cout << "gameObjectManager: " << hex << this->offsets.gameObjectManager;
-	printf("GOM: 0x%X\n", this->offsets.gameObjectManager);
+	//cout << "gameObjectManager: " << hex << this->offsets.gameObjectManager;
+	//printf("GOM: 0x%X\n", this->offsets.gameObjectManager);
 	
 	//
 
@@ -34,17 +34,17 @@ bool EFTData::InitOffsets()
 	if (!active_objects[0] || !active_objects[1])
 		return false;
 
-	printf("ActiveObjects: 0x%X\n", active_objects);
+	//printf("ActiveObjects: 0x%X\n", active_objects);
 	
 	if (!(this->offsets.gameWorld = GetObjectFromList(active_objects[1], active_objects[0], _xor_("GameWorld"))))
 		return false;
 
-	printf("this->offsets.gameWorld: 0x%X\n", this->offsets.gameWorld);
+	//printf("this->offsets.gameWorld: 0x%X\n", this->offsets.gameWorld);
 	
 	// Find fps camera.
 	this->offsets.localGameWorld = driver::readEFTChain(this->offsets.gameWorld, { 0x30, 0x18, 0x28 });
 
-	printf("localgameWorld: 0x%X\n", this->offsets.localGameWorld);
+	//printf("localgameWorld: 0x%X\n", this->offsets.localGameWorld);
 	/*
 	// Get tagged objects and find fps camera.
 	auto tagged_objects = memio->read<std::array<uint64_t, 2>>(this->offsets.gameObjectManager + offsetof(EFTStructs::GameObjectManager, lastTaggedObject));
@@ -109,14 +109,16 @@ bool EFTData::Read()
 				uint64_t bone = driver::readEFTChain(bone_matrix, { 0x20, 0x10, 0x38 });
 				player.location = driver::read<FVector>(bone + 0xB0);
 
+				string player_name = EFTData::getPlayerName(player.instance);
 				
+
 				sprintf_s(char_x, "%f", player.location.x);
 				sprintf_s(char_y, "%f", player.location.y);
 				sprintf_s(char_z, "%f", player.location.z);
 				string x = char_x;
 				string y = char_y;
 				string z = char_z;
-				string str = "{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"z\":\"" + z + "\"}";
+				string str = "{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"z\":\"" + z + "\",\"name\":\"" + player_name + "\"}";
 				sendStr += str;
 				if (i != player_count - 1)
 					sendStr += ",";
@@ -153,7 +155,7 @@ bool EFTData::Read()
 		try
 		{
 			string sendUrl = "http://localhost:7001/savePos?requestInfo=" + sendStr;
-			cout << sendUrl << "\n";
+			//cout << sendUrl << "\n";
 			http::Request request("http://localhost:7001/savePos");
 			std::map<std::string, std::string> parameters = { {"requestInfo", sendStr}, {"player_count",  to_string(player_count)}, {"localPlayerPos", localPlayerPos } };
 			const http::Response response = request.send("POST", parameters, {
@@ -214,4 +216,27 @@ uint64_t EFTData::getbone_matrix(uint64_t instance)
 	static std::vector<uint64_t> temp{ this->offsets.Player.playerBody, 0x28, 0x28, 0x10 };
 
 	return driver::readEFTChain(instance, temp);
+}
+
+string EFTData::getPlayerName(uint64_t instance)
+{
+	static std::vector<uint64_t> tempchain{ this->offsets.Player.profile, this->offsets.profile.information };
+
+	uint64_t information = driver::readEFTChain(instance, tempchain);
+
+	if (driver::read<int32_t>(information + 0x54) != 0)
+	{
+		// 获取用户名
+		//uint64_t player_name = driver::read<int32_t>(information + 0x0010);
+		//printf("player_name: 0x%X\n", player_name);
+		//if (player_name)
+		//{
+		//	//int32_t nameLength = driver::read<int32_t>(player_name + this->offsets.unicodeString.length);
+		//	//printf("nameLength: 0x%X\n", nameLength);
+		//	return driver::GetUnicodeString(player_name , 5);
+		//}
+		return "isPlayer";
+	}
+
+	return "";
 }

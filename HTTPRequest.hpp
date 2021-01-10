@@ -512,6 +512,7 @@ namespace http
             std::size_t expectedChunkSize = 0;
             bool removeCrlfAfterChunk = false;
 
+            return response;
             // read the response
             for (;;)
             {
