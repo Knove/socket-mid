@@ -8,6 +8,8 @@
 #include <iostream>
 #include "driver.h"
 #include "HTTPRequest.hpp"
+#include <d3dx9math.h>
+#include <d2d1.h>
 
 using namespace std;
 std::list<uint64_t> bodypart = { BodyParts::Head, BodyParts::Thorax, BodyParts::Stomach, BodyParts::LeftArm, BodyParts::RightArm, BodyParts::LeftLeg, BodyParts::RightLeg };
@@ -17,6 +19,54 @@ EFTData* EFTData::Instance()
 	static EFTData instance;
 	return &instance;
 }
+
+D3DXMATRIX viewMatrix;
+
+bool WorldToScreenv2(const FVector& point3D, D2D1_POINT_2F& point2D)
+{
+	D3DXVECTOR3 _point3D = D3DXVECTOR3(point3D.x, point3D.z, point3D.y);
+
+	auto& matrix = viewMatrix;
+
+	//if (EFTData::Instance()->IsAiming(EFTData::Instance()->localPlayer.instance) && EFTData::Instance()->get_mpcamera(EFTData::Instance()->localPlayer.instance))
+	//{
+	//	matrix = EFTData::Instance()->getoptic_matrix(EFTData::Instance()->localPlayer.instance);
+	//}
+
+	D3DXVECTOR3 translationVector = D3DXVECTOR3(matrix._41, matrix._42, matrix._43);
+	D3DXVECTOR3 up = D3DXVECTOR3(matrix._21, matrix._22, matrix._23);
+	D3DXVECTOR3 right = D3DXVECTOR3(matrix._11, matrix._12, matrix._13);
+
+	float w = D3DXVec3Dot(&translationVector, &_point3D) + matrix._44;
+
+	if (w < 0.098f)
+		return false;
+
+	float y = D3DXVec3Dot(&up, &_point3D) + matrix._24;
+	float x = D3DXVec3Dot(&right, &_point3D) + matrix._14;
+
+
+	/*if (EFTData::Instance()->IsAiming(EFTData::Instance()->localPlayer.instance) && EFTData::Instance()->get_mpcamera(EFTData::Instance()->localPlayer.instance))
+	{
+		uint64_t chain = memio->ReadChain(EFTData::Instance()->offsets.fpsCamera, { 0x30, 0x18 });
+
+		x /= memio->read<float>(chain + 0x12C);
+
+		if (x < 2.f)
+			x /= memio->read<float>(chain + 0xAC);
+
+		y /= memio->read<float>(chain + 0x118);
+
+		if (y < 2.f)
+			y /= memio->read<float>(chain + 0x98);
+	}*/
+
+	point2D.x = (2560 / 2) * (1.f + x / w);
+	point2D.y = (1440 / 2) * (1.f - y / w);
+
+	return true;
+}
+
 
 
 /* All one time initialization in here*/
@@ -45,28 +95,30 @@ bool EFTData::InitOffsets()
 	this->offsets.localGameWorld = driver::readEFTChain(this->offsets.gameWorld, { 0x30, 0x18, 0x28 });
 
 	//printf("localgameWorld: 0x%X\n", this->offsets.localGameWorld);
-	/*
+	
 	// Get tagged objects and find fps camera.
-	auto tagged_objects = memio->read<std::array<uint64_t, 2>>(this->offsets.gameObjectManager + offsetof(EFTStructs::GameObjectManager, lastTaggedObject));
+	auto tagged_objects = driver::read<std::array<uint64_t, 2>>(this->offsets.gameObjectManager + offsetof(EFTStructs::GameObjectManager, lastTaggedObject));
 	if (!tagged_objects[0] || !tagged_objects[1])
 		return false;
 
 	if (!(this->offsets.fpsCamera = GetObjectFromList(tagged_objects[1], tagged_objects[0], _xor_("FPS Camera"))))
 		return false;
-
-
+	//printf("fpsCamera: 0x%X\n", this->offsets.fpsCamera);
+	/*
 	*/
 	return true;
 }
 
 string sendStr = "[";
 string localPlayerPos = "";
-char char_x[100], char_y[100], char_z[100];
+string send2dPos = "[{}";
+char char_x[100], char_y[100], char_z[100], char_distance[100];
+
 bool EFTData::Read()
 {
 	this->players.clear();
 	sendStr = "[";
-
+	send2dPos = "[{}";
 	// Accumulate players.
 	{
 
@@ -81,7 +133,7 @@ bool EFTData::Read()
 
 		uint64_t list_base = driver::read<uint64_t>(onlineusers + offsetof(EFTStructs::List, listBase));
 		int player_count = driver::read<int>(onlineusers + offsetof(EFTStructs::List, itemCount));
-		printf("player_count: %d\n", player_count);
+		//printf("player_count: %d\n", player_count);
 		
 		if (player_count <= 0 || !list_base)
 			return false;
@@ -95,6 +147,22 @@ bool EFTData::Read()
 
 		EFTPlayer player;
 
+		// 获取相机矩阵
+		{
+			uint64_t temp = this->offsets.fpsCamera;
+			if (!(temp = driver::read<uint64_t>(temp + 0x30)) || !(temp = driver::read<uint64_t>(temp + 0x18)))
+				return false;
+
+			D3DXMATRIX temp_matrix;
+			driver::read_memory(temp + 0x00D8, &temp_matrix, sizeof(temp_matrix));
+			viewMatrix = temp_matrix;
+			D3DXMatrixTranspose(&viewMatrix, &temp_matrix);
+
+		}
+
+		float distance;
+		float MaxDrawDistance = 1000.f;
+		string player_name = "";
 		for (int i = 0; i < player_count; i++)
 		{
 			player.instance = player_buffer[i];
@@ -109,7 +177,7 @@ bool EFTData::Read()
 				uint64_t bone = driver::readEFTChain(bone_matrix, { 0x20, 0x10, 0x38 });
 				player.location = driver::read<FVector>(bone + 0xB0);
 
-				string player_name = EFTData::getPlayerName(player.instance);
+				player_name = EFTData::getPlayerName(player.instance);
 				
 
 				sprintf_s(char_x, "%f", player.location.x);
@@ -149,15 +217,35 @@ bool EFTData::Read()
 			}
 
 			this->players.emplace_back(player);
-		}
+		
+			// 2d pos get
+			if (!player.instance) continue;
+			if (player.instance == this->localPlayer.instance)continue;
+			distance = this->localPlayer.location.Distance(player.location);
+			
+			if (distance > MaxDrawDistance)
+				continue;
+			D2D1_POINT_2F screen_pos;
+			WorldToScreenv2(player.location, screen_pos);
+			sprintf_s(char_x, "%f", screen_pos.x);
+			sprintf_s(char_y, "%f", screen_pos.y);
+			sprintf_s(char_distance, "%f", distance);
+			
+			string x = char_x;
+			string y = char_y;
+			string d = char_distance;
+			send2dPos += ",{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"name\":\"" + player_name + "\", \"distance\":\"" + d + "\" }";
 
+			player_name = "";
+		}
+		send2dPos += "]";
 		// 发起请求
 		try
 		{
 			string sendUrl = "http://localhost:7001/savePos?requestInfo=" + sendStr;
 			//cout << sendUrl << "\n";
 			http::Request request("http://localhost:7001/savePos");
-			std::map<std::string, std::string> parameters = { {"requestInfo", sendStr}, {"player_count",  to_string(player_count)}, {"localPlayerPos", localPlayerPos } };
+			std::map<std::string, std::string> parameters = { {"requestInfo", sendStr}, {"player_count",  to_string(player_count)}, {"localPlayerPos", localPlayerPos }, {"send2dPos", send2dPos } };
 			const http::Response response = request.send("POST", parameters, {
 				"Content-Type: application/x-www-form-urlencoded"
 			});
@@ -239,4 +327,10 @@ string EFTData::getPlayerName(uint64_t instance)
 	}
 
 	return "";
+}
+
+bool EFTData::IsAiming(uint64_t	 instance)
+{
+	uint64_t m_pbreath = driver::readEFTChain(instance, { this->offsets.Player.proceduralWeaponAnimation, 0x28 });
+	return driver::read<bool>(m_pbreath + 0x88);
 }

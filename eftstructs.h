@@ -53,7 +53,7 @@ struct EFTOffsets
 	{
 		static constexpr uint64_t m_pPlayerProfile = 0x0440;  //updated 1/9/2021
 		static constexpr uint64_t movementContext = 0x38;
-		static constexpr uint64_t proceduralWeaponAnimation = 0x70; //updayed 1/11/2020
+		static constexpr uint64_t proceduralWeaponAnimation = 0x0190; //updayed 1/16/2021
 		static constexpr uint64_t playerBody = 0x00A8; //updated 1/7/2021
 		static constexpr uint64_t m_pHealthController = 0x3D0; //updated 1/11/2020
 		static constexpr uint64_t profile = 0x0440; //updated 1/9/2021
@@ -129,7 +129,6 @@ public:
 	static EFTData* Instance();
 
 	bool InitOffsets();
-
 	FVector GetPosition(uint64_t transform);
 
 	bool Read();
