@@ -101,10 +101,10 @@ int main()
 		if (!gameData->Read())
 		{
 			gameData->InitOffsets();
-			Sleep(5000);
+			Sleep(4000);
 		}
 
-		Sleep(5);
+		//Sleep(2);
 	}
 
 	

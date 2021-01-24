@@ -20,6 +20,23 @@ EFTData* EFTData::Instance()
 	return &instance;
 }
 
+D3DXMATRIX getoptic_matrix(uint64_t instance)
+{
+	D3DXMATRIX temp_matrix;
+	D3DXMATRIX outmatrix;
+
+	static std::vector<uint64_t> tempchain{ EFTData::Instance()->offsets.Player.proceduralWeaponAnimation,0x88, 0x20, 0x28, 0x30 };
+
+	uint64_t temp = driver::readEFTChain(instance, tempchain);
+
+	//printf(_xor_("temp : 0x%X\n"), temp);
+	driver::read_memory(temp + 0x00D8, &temp_matrix, sizeof(temp_matrix));
+	D3DXMatrixTranspose(&outmatrix, &temp_matrix);
+
+	return outmatrix;
+}
+
+
 D3DXMATRIX viewMatrix;
 
 bool WorldToScreenv2(const FVector& point3D, D2D1_POINT_2F& point2D)
@@ -28,10 +45,10 @@ bool WorldToScreenv2(const FVector& point3D, D2D1_POINT_2F& point2D)
 
 	auto& matrix = viewMatrix;
 
-	//if (EFTData::Instance()->IsAiming(EFTData::Instance()->localPlayer.instance) && EFTData::Instance()->get_mpcamera(EFTData::Instance()->localPlayer.instance))
-	//{
-	//	matrix = EFTData::Instance()->getoptic_matrix(EFTData::Instance()->localPlayer.instance);
-	//}
+	if (EFTData::Instance()->IsAiming(EFTData::Instance()->localPlayer.instance) && EFTData::Instance()->get_mpcamera(EFTData::Instance()->localPlayer.instance))
+	{
+		matrix = getoptic_matrix(EFTData::Instance()->localPlayer.instance);
+	}
 
 	D3DXVECTOR3 translationVector = D3DXVECTOR3(matrix._41, matrix._42, matrix._43);
 	D3DXVECTOR3 up = D3DXVECTOR3(matrix._21, matrix._22, matrix._23);
@@ -46,20 +63,20 @@ bool WorldToScreenv2(const FVector& point3D, D2D1_POINT_2F& point2D)
 	float x = D3DXVec3Dot(&right, &_point3D) + matrix._14;
 
 
-	/*if (EFTData::Instance()->IsAiming(EFTData::Instance()->localPlayer.instance) && EFTData::Instance()->get_mpcamera(EFTData::Instance()->localPlayer.instance))
+	if (EFTData::Instance()->IsAiming(EFTData::Instance()->localPlayer.instance) && EFTData::Instance()->get_mpcamera(EFTData::Instance()->localPlayer.instance))
 	{
-		uint64_t chain = memio->ReadChain(EFTData::Instance()->offsets.fpsCamera, { 0x30, 0x18 });
+		uint64_t chain = driver::readEFTChain(EFTData::Instance()->offsets.fpsCamera, { 0x30, 0x18 });
 
-		x /= memio->read<float>(chain + 0x12C);
+		x /= driver::read<float>(chain + 0x12C);
 
 		if (x < 2.f)
-			x /= memio->read<float>(chain + 0xAC);
+			x /= driver::read<float>(chain + 0xAC);
 
-		y /= memio->read<float>(chain + 0x118);
+		y /= driver::read<float>(chain + 0x118);
 
 		if (y < 2.f)
-			y /= memio->read<float>(chain + 0x98);
-	}*/
+			y /= driver::read<float>(chain + 0x98);
+	}
 
 	point2D.x = (2560 / 2) * (1.f + x / w);
 	point2D.y = (1440 / 2) * (1.f - y / w);
@@ -161,7 +178,7 @@ bool EFTData::Read()
 		}
 
 		float distance;
-		float MaxDrawDistance = 1000.f;
+		float MaxDrawDistance = 700.f;
 		string player_name = "";
 		for (int i = 0; i < player_count; i++)
 		{
@@ -229,14 +246,17 @@ bool EFTData::Read()
 			WorldToScreenv2(player.location, screen_pos);
 			sprintf_s(char_x, "%f", screen_pos.x);
 			sprintf_s(char_y, "%f", screen_pos.y);
-			sprintf_s(char_distance, "%f", distance);
 			
+			sprintf_s(char_distance, "%f", distance);
+			//cout << "get players!  x:" << player.location.x << "y: " << player.location.y << "\n";
 			string x = char_x;
 			string y = char_y;
 			string d = char_distance;
 			send2dPos += ",{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"name\":\"" + player_name + "\", \"distance\":\"" + d + "\" }";
 
 			player_name = "";
+			screen_pos.x = 0;
+			screen_pos.y = 0;
 		}
 		send2dPos += "]";
 		// ·¢ÆðÇëÇó
@@ -334,3 +354,12 @@ bool EFTData::IsAiming(uint64_t	 instance)
 	uint64_t m_pbreath = driver::readEFTChain(instance, { this->offsets.Player.proceduralWeaponAnimation, 0x28 });
 	return driver::read<bool>(m_pbreath + 0x88);
 }
+
+uint64_t EFTData::get_mpcamera(uint64_t instance)
+{
+	static std::vector<uint64_t> temp{ this->offsets.Player.proceduralWeaponAnimation, 0x88, 0x20 };
+
+	return driver::readEFTChain(instance, temp);
+}
+
+
