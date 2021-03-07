@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <d3d9helper.h>
 
 using namespace std;
 namespace driver

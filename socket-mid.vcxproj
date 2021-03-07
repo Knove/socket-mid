@@ -148,14 +148,17 @@
     <ClCompile Include="driver.cpp" />
     <ClCompile Include="eftstructs.cpp" />
     <ClCompile Include="math.cpp" />
+    <ClCompile Include="Overlay.cpp" />
     <ClCompile Include="socket-mid.cpp" />
+    <ClCompile Include="visuals.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h" />
     <ClInclude Include="eftstructs.h" />
-    <ClInclude Include="HTTPRequest.hpp" />
     <ClInclude Include="math.hpp" />
+    <ClInclude Include="Overlay.h" />
     <ClInclude Include="server_shared.h" />
+    <ClInclude Include="visuals.h" />
     <ClInclude Include="xorstr.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

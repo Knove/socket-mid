@@ -27,6 +27,12 @@
     <ClCompile Include="math.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="visuals.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Overlay.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
@@ -44,7 +50,10 @@
     <ClInclude Include="xorstr.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="HTTPRequest.hpp">
+    <ClInclude Include="visuals.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Overlay.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

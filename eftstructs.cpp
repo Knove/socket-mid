@@ -7,9 +7,9 @@
 #include <codecvt>
 #include <iostream>
 #include "driver.h"
-#include "HTTPRequest.hpp"
 #include <d3dx9math.h>
 #include <d2d1.h>
+#include "overlay.h"
 
 using namespace std;
 std::list<uint64_t> bodypart = { BodyParts::Head, BodyParts::Thorax, BodyParts::Stomach, BodyParts::LeftArm, BodyParts::RightArm, BodyParts::LeftLeg, BodyParts::RightLeg };
@@ -126,16 +126,9 @@ bool EFTData::InitOffsets()
 	return true;
 }
 
-string sendStr = "[";
-string localPlayerPos = "";
-string send2dPos = "[{}";
-char char_x[100], char_y[100], char_z[100], char_distance[100];
-
 bool EFTData::Read()
 {
 	this->players.clear();
-	sendStr = "[";
-	send2dPos = "[{}";
 	// Accumulate players.
 	{
 
@@ -147,14 +140,12 @@ bool EFTData::Read()
 			return false;
 		}
 			
-
 		uint64_t list_base = driver::read<uint64_t>(onlineusers + offsetof(EFTStructs::List, listBase));
 		int player_count = driver::read<int>(onlineusers + offsetof(EFTStructs::List, itemCount));
 		//printf("player_count: %d\n", player_count);
 		
 		if (player_count <= 0 || !list_base)
 			return false;
-
 		//string palyinfo = "{\"player_count\":\"" + to_string(player_count) + "\"},";
 		//sendStr += palyinfo;
 		constexpr auto BUFFER_SIZE = 128;
@@ -177,6 +168,11 @@ bool EFTData::Read()
 
 		}
 
+		static char cTitle[256];
+		sprintf_s(cTitle, "Players:%d", player_count);
+		
+		String(42, 92, D3DCOLOR_RGBA(255, 255, 255, 255), true, cTitle);
+
 		float distance;
 		float MaxDrawDistance = 700.f;
 		string player_name = "";
@@ -195,24 +191,7 @@ bool EFTData::Read()
 				player.location = driver::read<FVector>(bone + 0xB0);
 
 				player_name = EFTData::getPlayerName(player.instance);
-				
 
-				sprintf_s(char_x, "%f", player.location.x);
-				sprintf_s(char_y, "%f", player.location.y);
-				sprintf_s(char_z, "%f", player.location.z);
-				string x = char_x;
-				string y = char_y;
-				string z = char_z;
-				string str = "{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"z\":\"" + z + "\",\"name\":\"" + player_name + "\"}";
-				sendStr += str;
-				if (i != player_count - 1)
-					sendStr += ",";
-				else
-					sendStr += "]";
-
-				memset(char_x, 0, 100);
-				memset(char_y, 0, 100);
-				memset(char_z, 0, 100);
 				//cout << "get players!  x:" << player.location.x << "y: "<< player.location.y << "z: " << player.location.z << "\n";
 				//player.headPos = GetPosition(driver::read<uint64_t>(bone_matrix + (0x20 + ((int)Bones::HumanHead * 8))));
 
@@ -221,13 +200,6 @@ bool EFTData::Read()
 			// Leave this at the end to have all the data.
 			if (driver::read<int>(player.instance + 0x18))
 			{
-				sprintf_s(char_x, "%f", player.location.x);
-				sprintf_s(char_y, "%f", player.location.y);
-				sprintf_s(char_z, "%f", player.location.z);
-				string x = char_x;
-				string y = char_y;
-				string z = char_z;
-				localPlayerPos = "{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"z\":\"" + z + "\"}";
 
 				this->localPlayer = player;
 				this->localPlayer.location = player.location;
@@ -244,37 +216,20 @@ bool EFTData::Read()
 				continue;
 			D2D1_POINT_2F screen_pos;
 			WorldToScreenv2(player.location, screen_pos);
-			sprintf_s(char_x, "%f", screen_pos.x);
-			sprintf_s(char_y, "%f", screen_pos.y);
-			
-			sprintf_s(char_distance, "%f", distance);
-			//cout << "get players!  x:" << player.location.x << "y: " << player.location.y << "\n";
-			string x = char_x;
-			string y = char_y;
-			string d = char_distance;
-			send2dPos += ",{\"x\":\"" + x + "\", \"y\":\"" + y + "\",\"name\":\"" + player_name + "\", \"distance\":\"" + d + "\" }";
 
+			// draw
+			String((int)screen_pos.x, (int)screen_pos.y, D3DCOLOR_RGBA(255, 255, 255, 255), true, _xor_("%0.2fm").operator const char* (), distance);
+			Circle((int)screen_pos.x, (int)screen_pos.y, 4, 0, 1, true, 32, D3DCOLOR_ARGB(255, 255, 255, 255));
+
+			float ki = (1 / distance) * 1.5 * 1440;
+			if (player_name == "isPlayer")
+				draw_box((int)screen_pos.x - (ki / 1440) * 400, (int)screen_pos.y - 70 * (ki / 1440) * 20, ki * 0.5, ki, D3DCOLOR_ARGB(200, 215, 0, 255));
+			else 
+				draw_box((int)screen_pos.x - (ki / 1440) * 400, (int)screen_pos.y - 70 * (ki / 1440) * 20, ki * 0.5, ki, D3DCOLOR_ARGB(200, 255, 215, 0));
 			player_name = "";
 			screen_pos.x = 0;
 			screen_pos.y = 0;
 		}
-		send2dPos += "]";
-		// ·¢ÆðÇëÇó
-		try
-		{
-			string sendUrl = "http://localhost:7001/savePos?requestInfo=" + sendStr;
-			//cout << sendUrl << "\n";
-			http::Request request("http://localhost:7001/savePos");
-			std::map<std::string, std::string> parameters = { {"requestInfo", sendStr}, {"player_count",  to_string(player_count)}, {"localPlayerPos", localPlayerPos }, {"send2dPos", send2dPos } };
-			const http::Response response = request.send("POST", parameters, {
-				"Content-Type: application/x-www-form-urlencoded"
-			});
-		}
-		catch (const std::exception& e)
-		{
-			std::cerr << "Request failed, error: " << e.what() << '\n';
-		}
-
 	}
 	/*
 	*/
