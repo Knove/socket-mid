@@ -10,7 +10,7 @@ using namespace std;
 struct EFTOffsets
 {
 	// 0x15181E8
-	static constexpr uint64_t offs_gameObjectManager = 0x156B698;
+	static constexpr uint64_t offs_gameObjectManager = 0x156C698;  //UPDATED 7/22/2021
 
 	uint64_t gameObjectManager = 0x0;
 	uint64_t gameWorld = 0x0;
@@ -51,12 +51,12 @@ struct EFTOffsets
 
 	struct
 	{
-		static constexpr uint64_t m_pPlayerProfile = 0x0440;  //updated 1/9/2021
+		static constexpr uint64_t m_pPlayerProfile = 0x458;  //updated 7/22/2021
 		static constexpr uint64_t movementContext = 0x38;
 		static constexpr uint64_t proceduralWeaponAnimation = 0x0190; //updayed 1/16/2021
 		static constexpr uint64_t playerBody = 0x00A8; //updated 1/7/2021
 		static constexpr uint64_t m_pHealthController = 0x3D0; //updated 1/11/2020
-		static constexpr uint64_t profile = 0x0440; //updated 1/9/2021
+		static constexpr uint64_t profile = 0x458; //updated 7/22/2021   0x3D8
 
 	} Player;
 };

@@ -216,6 +216,6 @@ string driver::GetUnicodeString(uint64_t addr, int stringLength)
 	driver::read_memory(addr, wcharTemp, stringLength * 2);
 
 	std::string u8_conv = wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.to_bytes(wcharTemp);
-	cout << "u8_conv" << u8_conv <<  "\n";
+	//cout << "u8_conv" << u8_conv <<  "\n";
 	return u8_conv;
 }
